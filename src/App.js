@@ -18,7 +18,7 @@ function App() {
   const runSimulation = async () => {
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8000/run-simulation" // ✅ LOCAL BACKEND
+        "https://github.com/lakshay-chauhan/green-cloud-frontend" // ✅ LOCAL BACKEND
         // "https://green-cloud-backend.onrender.com/run-simulation" // use this for deployed
       );
 
