@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://green-cloud-backend.onrender.com", // change after deployment
+  baseURL: "https://green-cloud-backend.onrender.com/run-simulation", // change after deployment
 });
 
 export const runSimulation = async () => {
