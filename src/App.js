@@ -20,41 +20,42 @@ function App() {
   );
   const [analysis, setAnalysis] = useState(null);
 
+  // Replace this with your actual Render URL
+  const BACKEND_URL = "https://green-cloud-backend.onrender.com";
+
   const runSimulation = async () => {
     setLoading(true);
+    setAnalysis(null);
+    setData(null);
+    
     try {
-      // STEP 1: Call your Green Code Analyzer API (Render URL)
-      // Replace with your actual Analyzer URL
-      const analyzerRes = await axios.post("https://your-analyzer-api.onrender.com/analyze", {
+      // STEP 1: Analyze Code Complexity with Gemini 2.5 Flash
+      const analyzerRes = await axios.post(`${BACKEND_URL}/analyze`, {
         code: userCode
       });
       
       const metrics = analyzerRes.data;
       setAnalysis(metrics);
-      console.log("ANALYSIS SUCCESS:", metrics);
+      console.log("Gemini Analysis:", metrics);
 
-      // STEP 2: Call your Simulation Backend with the analyzed metrics
-      const res = await axios.post(
-        "https://green-cloud-backend.onrender.com/run-simulation",
-        {
-          code_impact: {
-            energy: metrics.environmental_impact.energy_joules,
-            rating: metrics.sustainability_rating
-          }
+      // STEP 2: Run the Simulation using the analyzed metrics
+      const simRes = await axios.post(`${BACKEND_URL}/run-simulation`, {
+        code_impact: {
+          energy: metrics.environmental_impact?.energy_joules || 0.0005,
+          rating: metrics.sustainability_rating || "B (Standard)"
         }
-      );
+      });
 
-      console.log("SIMULATION SUCCESS:", res.data);
-      setData(res.data);
+      console.log("Simulation Result:", simRes.data);
+      setData(simRes.data);
     } catch (error) {
-      console.error("Error in simulation pipeline:", error);
-      alert("Simulation failed. Check console for details.");
+      console.error("Pipeline Error:", error);
+      alert("Error: Check console or ensure backend is running.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Graph data mapping
   const chartData = data
     ? [
         { name: "Carbon Saved", value: data.carbon_saved },
@@ -68,89 +69,72 @@ function App() {
     <div className="container">
       <h1>🌱 Green Cloud Optimization Dashboard</h1>
 
-      {/* NEW: Code Input Section */}
+      {/* STEP 1: CODE INPUT */}
       <div className="input-section">
-        <h2>💻 Step 1: Input Workload Code</h2>
-        <p className="subtitle">Paste the Python code you want the Cloud Agent to optimize.</p>
+        <h2>💻 Input Workload Code</h2>
+        <p className="subtitle">Enter Python code to analyze its environmental footprint.</p>
         <textarea
           className="code-editor"
           value={userCode}
           onChange={(e) => setUserCode(e.target.value)}
-          placeholder="Enter your python code here..."
-          rows="8"
+          rows="10"
         />
       </div>
 
       <button onClick={runSimulation} className="btn" disabled={loading}>
-        {loading ? "⏳ Analyzing & Simulating..." : "▶ Run Sustainability-Aware Simulation"}
+        {loading ? "⏳ Processing..." : "▶ Run Sustainability-Aware Simulation"}
       </button>
 
-      {/* NEW: Display Analysis Results */}
+      {/* STEP 2: ANALYSIS RESULTS */}
       {analysis && (
         <div className="analysis-box">
-          <h3>🔍 Code Analysis Result</h3>
+          <h3>🔍 Gemini 2.5 Flash Analysis</h3>
           <div className="analysis-grid">
             <div className="analysis-card">
-              ⚡ Energy: <strong>{analysis.environmental_impact.energy_joules.toFixed(6)} J</strong>
+              <p>Energy Consumption</p>
+              <strong>{analysis.environmental_impact.energy_joules.toFixed(8)} J</strong>
             </div>
             <div className="analysis-card">
-              💧 Water: <strong>{analysis.environmental_impact.water_usage_ml.toFixed(8)} ml</strong>
+              <p>Water Usage</p>
+              <strong>{analysis.environmental_impact.water_usage_ml.toFixed(10)} ml</strong>
             </div>
             <div className="analysis-card">
-              🏆 Rating: <span className={`grade ${analysis.sustainability_rating.split(' ')[0]}`}>
-                {analysis.sustainability_rating}
-              </span>
+              <p>Sustainability Grade</p>
+              <strong className="rating-text">{analysis.sustainability_rating}</strong>
             </div>
           </div>
         </div>
       )}
 
+      {/* STEP 3: SIMULATION RESULTS */}
       {data && (
         <>
-          <h2>📊 Cloud Simulation Results</h2>
+          <h2>📊 Simulation Metrics</h2>
           <div className="cards">
-            <div className="card">
-              🌱 Carbon Saved
-              <h3>{data.carbon_saved}</h3>
-            </div>
-            <div className="card">
-              ⚠️ SLA Violations
-              <h3>{data.sla_violations}</h3>
-            </div>
-            <div className="card">
-              🚀 Migrations
-              <h3>{data.migrations}</h3>
-            </div>
-            <div className="card">
-              ⏳ Delayed Tasks
-              <h3>{data.delayed_tasks}</h3>
-            </div>
+            <div className="card">🌱 Carbon Saved <h3>{data.carbon_saved}</h3></div>
+            <div className="card">⚠️ SLA Violations <h3>{data.sla_violations}</h3></div>
+            <div className="card">🚀 Migrations <h3>{data.migrations}</h3></div>
+            <div className="card">⏳ Delayed Tasks <h3>{data.delayed_tasks}</h3></div>
           </div>
 
-          <h2>🧠 Intelligent Metrics</h2>
+          <h2>🧠 Intelligent Insights</h2>
           <div className="cards">
-            <div className="card highlight">
-              💳 Total Carbon Credits
-              <h3>{data.total_credits}</h3>
-            </div>
-            <div className="card highlight">
-              💸 Avg Migration Cost
-              <h3>{data.avg_migration_cost.toFixed(2)}</h3>
-            </div>
+            <div className="card highlight">💳 Total Credits <h3>{data.total_credits}</h3></div>
+            <div className="card highlight">📉 Carbon Trend <h3>{data.trend}</h3></div>
           </div>
 
           <h2>📊 Performance Graph</h2>
-          <ResponsiveContainer width="100%\" height={300}>
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="value" fill="#4caf50" />
+              <Bar dataKey="value" fill="#22c55e" />
             </BarChart>
           </ResponsiveContainer>
 
-          <h2>📜 Simulation Logs</h2>
+          <h2>📜 Agent Decision Logs</h2>
           <div className="logs">
             {data.logs.map((log, index) => (
               <p key={index}>➤ {log}</p>
