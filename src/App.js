@@ -21,8 +21,8 @@ function App() {
   const [analysis, setAnalysis] = useState(null);
 
   // 🔴 CONFIGURATION: Replace these with your actual Render URLs
-  const ANALYZER_SERVICE_URL = "https://your-gemini-analyzer.onrender.com";
-  const SIMULATION_SERVICE_URL = "https://your-simulation-backend.onrender.com";
+  const ANALYZER_SERVICE_URL = "https://green-cloud-data.onrender.com";
+  const SIMULATION_SERVICE_URL = "https://green-cloud-backend.onrender.com/";
 
   const runFullPipeline = async () => {
     setLoading(true);
