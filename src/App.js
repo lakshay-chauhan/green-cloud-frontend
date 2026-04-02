@@ -12,7 +12,7 @@ function App() {
   const [code2, setCode2] = useState("def heavy_task(n):\n    res = []\n    for i in range(n):\n        for j in range(n):\n            res.append(i*j)");
 
   // 🔴 UPDATE THESE URLS
-  const ANALYZER_URL = "https://your-gemini-analyzer.onrender.com";
+  const ANALYZER_URL = "https://green-cloud-data.onrender.com";
   const SIMULATION_URL = "https://green-cloud-backend.onrender.com";
 
   const runDualSimulation = async () => {
