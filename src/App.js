@@ -11,7 +11,7 @@ function App() {
   const [codeB, setCodeB] = useState("def heavy_loop(n):\n    res = []\n    for i in range(n):\n        for j in range(n):\n            res.append(i*j)");
 
   // 🔴 UPDATE THESE WITH YOUR RENDER URLs
-  const ANALYZER_URL = "https://your-gemini-analyzer.onrender.com";
+  const ANALYZER_URL = "https://green-cloud-data.onrender.com";
   const SIMULATION_URL = "https://green-cloud-backend.onrender.com";
 
   const runDualPipeline = async () => {
