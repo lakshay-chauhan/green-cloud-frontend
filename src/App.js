@@ -3,35 +3,39 @@ import axios from "axios";
 import "./App.css";
 
 function App() {
-  const [code1, setCode1] = useState("def efficient(): return 1");
-  const [code2, setCode2] = useState("def heavy(): return [i for i in range(10000)]");
-  const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  
+  // 1. Dual Code States
+  const [codeA, setCodeA] = useState("def efficient_sort(arr):\n    return sorted(arr)");
+  const [codeB, setCodeB] = useState("def heavy_loop(n):\n    res = []\n    for i in range(n):\n        for j in range(n):\n            res.append(i*j)");
 
-  const ANALYZER_URL = "https://green-cloud-data.onrender.com";
+  // 🔴 UPDATE THESE WITH YOUR RENDER URLs
+  const ANALYZER_URL = "https://your-gemini-analyzer.onrender.com";
   const SIMULATION_URL = "https://green-cloud-backend.onrender.com";
 
-  const runSimulation = async () => {
+  const runDualPipeline = async () => {
     setLoading(true);
+    setResults(null);
     try {
-      // Step 1: Analyze both
-      const r1 = await axios.post(`${ANALYZER_URL}/analyze`, { code: code1 });
-      const r2 = await axios.post(`${ANALYZER_URL}/analyze`, { code: code2 });
+      // Step 1: Analyze BOTH codes sequentially
+      const resA = await axios.post(`${ANALYZER_URL}/analyze`, { code: codeA });
+      const resB = await axios.post(`${ANALYZER_URL}/analyze`, { code: codeB });
       
-      const workloads = [r1.data, r2.data];
+      const analysisData = [resA.data, resB.data];
 
-      // Step 2: Simulate
-      const sim = await axios.post(`${SIMULATION_URL}/run-simulation`, {
-        workloads: workloads.map(w => ({
+      // Step 2: Send both results to the Simulation
+      const simRes = await axios.post(`${SIMULATION_URL}/run-simulation`, {
+        workloads: analysisData.map(w => ({
           energy_joules: w.energy_joules,
           rating: w.rating
         }))
       });
 
-      setResults({ analysis: workloads, simulation: sim.data });
+      setResults({ analysis: analysisData, simulation: simRes.data });
     } catch (err) {
-      alert("Check Console: Connection Error or 500 Crash");
       console.error(err);
+      alert("Pipeline Error! Check if both Render services are 'Live'.");
     } finally {
       setLoading(false);
     }
@@ -39,28 +43,55 @@ function App() {
 
   return (
     <div className="container">
-      <h1>🌱 Green Cloud Dual-Orchestrator</h1>
-      <div className="dual-grid">
-        <textarea value={code1} onChange={(e) => setCode1(e.target.value)} />
-        <textarea value={code2} onChange={(e) => setCode2(e.target.value)} />
+      <header>
+        <h1>🌱 Green Cloud Orchestrator</h1>
+        <p>Compare two workloads and observe Agent-led Carbon-aware migration.</p>
+      </header>
+
+      {/* 2. SPACE FOR TWO CODES (Side-by-Side Grid) */}
+      <div className="dual-editor-container">
+        <div className="editor-box">
+          <h3>Task A (Expected A+)</h3>
+          <textarea 
+            value={codeA} 
+            onChange={(e) => setCodeA(e.target.value)} 
+            className="code-input"
+          />
+        </div>
+        <div className="editor-box">
+          <h3>Task B (Expected D)</h3>
+          <textarea 
+            value={codeB} 
+            onChange={(e) => setCodeB(e.target.value)} 
+            className="code-input"
+          />
+        </div>
       </div>
-      
-      <button onClick={runSimulation} disabled={loading}>
-        {loading ? "Processing..." : "▶ Start Simulation"}
+
+      <button onClick={runDualPipeline} className="run-btn" disabled={loading}>
+        {loading ? "⏳ Analyzing & Simulating..." : "▶ Deploy to Green Cloud"}
       </button>
 
       {results && (
-        <div className="display">
-          {results.analysis.map((res, i) => (
-            <div key={i} className="card">
-              <h3>Task {i+1} ({res.rating})</h3>
-              <p>⚡ {res.energy_joules.toFixed(6)} Joules</p>
-              <p>💧 {res.water_ml.toFixed(6)} ml Water</p>
-              <p>☁️ {res.carbon_mg.toFixed(4)} mg Carbon</p>
-            </div>
-          ))}
-          <div className="logs">
-            {results.simulation.logs.map((l, i) => <p key={i}>{l}</p>)}
+        <div className="results-section">
+          <h2>📊 Derived Environmental Impact</h2>
+          <div className="analysis-grid">
+            {results.analysis.map((item, index) => (
+              <div key={index} className={`impact-card ${item.rating.charAt(0)}`}>
+                <h3>Task {index === 0 ? 'A' : 'B'}</h3>
+                <div className="badge">{item.rating}</div>
+                <p><strong>⚡ Energy:</strong> {item.energy_joules.toFixed(6)} J</p>
+                <p><strong>💧 Water:</strong> {item.water_ml.toFixed(6)} ml</p>
+                <p><strong>☁️ Carbon:</strong> {item.carbon_mg.toFixed(4)} mg</p>
+              </div>
+            ))}
+          </div>
+
+          <h2>🚀 Agent Migration Logs</h2>
+          <div className="log-window">
+            {results.simulation.logs.map((log, i) => (
+              <div key={i} className="log-entry">➤ {log}</div>
+            ))}
           </div>
         </div>
       )}
