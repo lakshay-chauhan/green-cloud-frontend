@@ -60,7 +60,18 @@ function App() {
       <button onClick={runDualSimulation} className="btn" disabled={loading}>
         {loading ? "⏳ Analyzing & Scheduling..." : "▶ Run Dual Simulation"}
       </button>
-
+    // Inside your loop in App.js that renders analysisResults
+{analysisResults.map((res, i) => (
+  <div key={i} className="card-analysis">
+    <h4>Task {i + 1} Footprint</h4>
+    <p>⚡ Energy: {res.energy_joules.toFixed(8)} J</p>
+    <p>💧 Water: {res.water_ml.toFixed(8)} ml</p>
+    <p>☁️ Carbon: {res.carbon_mg.toFixed(4)} mg</p>
+    <div className={`tag ${res.rating.includes("A") ? "green" : "red"}`}>
+      {res.rating}
+    </div>
+  </div>
+))}
       {analysisResults.length > 0 && (
         <div className="analysis-summary" style={{ marginTop: '20px', display: 'flex', gap: '20px' }}>
           {analysisResults.map((res, i) => (
