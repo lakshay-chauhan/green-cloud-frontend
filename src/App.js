@@ -3,40 +3,35 @@ import axios from "axios";
 import "./App.css";
 
 function App() {
+  const [code1, setCode1] = useState("def efficient(): return 1");
+  const [code2, setCode2] = useState("def heavy(): return [i for i in range(10000)]");
+  const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState(null);
-  const [analysisResults, setAnalysisResults] = useState([]);
-  
-  // Two separate code states
-  const [code1, setCode1] = useState("def fast_task():\n    return sum(range(100))");
-  const [code2, setCode2] = useState("def heavy_task(n):\n    res = []\n    for i in range(n):\n        for j in range(n):\n            res.append(i*j)");
 
-  // 🔴 UPDATE THESE URLS
   const ANALYZER_URL = "https://green-cloud-data.onrender.com";
   const SIMULATION_URL = "https://green-cloud-backend.onrender.com";
 
-  const runDualSimulation = async () => {
+  const runSimulation = async () => {
     setLoading(true);
     try {
-      // 1. Analyze both snippets
-      const res1 = await axios.post(`${ANALYZER_URL}/analyze`, { code: code1 });
-      const res2 = await axios.post(`${ANALYZER_URL}/analyze`, { code: code2 });
+      // Step 1: Analyze both
+      const r1 = await axios.post(`${ANALYZER_URL}/analyze`, { code: code1 });
+      const r2 = await axios.post(`${ANALYZER_URL}/analyze`, { code: code2 });
       
-      const workloads = [res1.data, res2.data];
-      setAnalysisResults(workloads);
+      const workloads = [r1.data, r2.data];
 
-      // 2. Run simulation with both workloads
-      const simRes = await axios.post(`${SIMULATION_URL}/run-simulation`, {
+      // Step 2: Simulate
+      const sim = await axios.post(`${SIMULATION_URL}/run-simulation`, {
         workloads: workloads.map(w => ({
-          energy: w.energy_joules,
+          energy_joules: w.energy_joules,
           rating: w.rating
         }))
       });
 
-      setData(simRes.data);
+      setResults({ analysis: workloads, simulation: sim.data });
     } catch (err) {
+      alert("Check Console: Connection Error or 500 Crash");
       console.error(err);
-      alert("Error in pipeline. Check URLs and console.");
     } finally {
       setLoading(false);
     }
@@ -44,49 +39,28 @@ function App() {
 
   return (
     <div className="container">
-      <h1>🌱 Green Cloud Dual-Workload Scheduler</h1>
-      
-      <div className="dual-editor-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        <div>
-          <h3>Workload A</h3>
-          <textarea className="code-editor" value={code1} onChange={(e) => setCode1(e.target.value)} rows="8" style={{ width: '100%' }} />
-        </div>
-        <div>
-          <h3>Workload B</h3>
-          <textarea className="code-editor" value={code2} onChange={(e) => setCode2(e.target.value)} rows="8" style={{ width: '100%' }} />
-        </div>
+      <h1>🌱 Green Cloud Dual-Orchestrator</h1>
+      <div className="dual-grid">
+        <textarea value={code1} onChange={(e) => setCode1(e.target.value)} />
+        <textarea value={code2} onChange={(e) => setCode2(e.target.value)} />
       </div>
-
-      <button onClick={runDualSimulation} className="btn" disabled={loading}>
-        {loading ? "⏳ Analyzing & Scheduling..." : "▶ Run Dual Simulation"}
+      
+      <button onClick={runSimulation} disabled={loading}>
+        {loading ? "Processing..." : "▶ Start Simulation"}
       </button>
-    // Inside your loop in App.js that renders analysisResults
-{analysisResults.map((res, i) => (
-  <div key={i} className="card-analysis">
-    <h4>Task {i + 1} Footprint</h4>
-    <p>⚡ Energy: {res.energy_joules.toFixed(8)} J</p>
-    <p>💧 Water: {res.water_ml.toFixed(8)} ml</p>
-    <p>☁️ Carbon: {res.carbon_mg.toFixed(4)} mg</p>
-    <div className={`tag ${res.rating.includes("A") ? "green" : "red"}`}>
-      {res.rating}
-    </div>
-  </div>
-))}
-      {analysisResults.length > 0 && (
-        <div className="analysis-summary" style={{ marginTop: '20px', display: 'flex', gap: '20px' }}>
-          {analysisResults.map((res, i) => (
+
+      {results && (
+        <div className="display">
+          {results.analysis.map((res, i) => (
             <div key={i} className="card">
-              Task {i + 1} Rating: <strong>{res.rating}</strong>
+              <h3>Task {i+1} ({res.rating})</h3>
+              <p>⚡ {res.energy_joules.toFixed(6)} Joules</p>
+              <p>💧 {res.water_ml.toFixed(6)} ml Water</p>
+              <p>☁️ {res.carbon_mg.toFixed(4)} mg Carbon</p>
             </div>
           ))}
-        </div>
-      )}
-
-      {data && (
-        <div className="results">
-          <h2>Simulation Logs</h2>
           <div className="logs">
-            {data.logs.map((log, i) => <p key={i}>➤ {log}</p>)}
+            {results.simulation.logs.map((l, i) => <p key={i}>{l}</p>)}
           </div>
         </div>
       )}
